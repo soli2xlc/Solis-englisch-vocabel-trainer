@@ -1,0 +1,188 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vokabeltrainer</title>
+<style>
+:root{--bg:#f4f6fb;--c:#fff;--t:#1d2433;--m:#6b7488;--p:#4f46e5;--ok:#16a34a;--no:#dc2626;--b:#e3e7f0}
+[data-theme=dark]{--bg:#0f1420;--c:#1a2132;--t:#e8ecf5;--m:#98a2b8;--p:#818cf8;--b:#2a3349}
+*{box-sizing:border-box}body{margin:0;font:17px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--t)}
+header{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:var(--c);border-bottom:1px solid var(--b);position:sticky;top:0;z-index:5}
+header b{margin-right:auto}
+button,input,select{font:inherit;color:inherit}
+.btn{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:12px 16px;cursor:pointer;min-height:44px}
+.btn.p{background:var(--p);color:#fff;border-color:var(--p)}.btn.ok{background:var(--ok);color:#fff;border:0}.btn.no{background:var(--no);color:#fff;border:0}
+main{max-width:860px;margin:0 auto;padding:16px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.k{background:var(--c);border:1px solid var(--b);border-radius:16px;padding:14px;animation:in .3s;color:var(--t)}
+.k b{font-size:26px;display:block}small{color:var(--m)}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.bar{height:12px;background:var(--b);border-radius:8px;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:var(--p);transition:width .4s}
+.m{cursor:pointer;text-align:left}.m:hover{border-color:var(--p)}
+.fc{min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:26px;cursor:pointer}
+input{width:100%;padding:14px;border-radius:12px;border:2px solid var(--b);background:var(--c);margin:8px 0}
+.opt{display:block;width:100%;margin:8px 0;text-align:left;border-width:2px}
+.f{padding:12px;border-radius:12px;margin:10px 0}.f.y{background:#16a34a33}.f.n{background:#dc262633}
+.r{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--b);align-items:flex-start}.r div{flex:1}
+.x{color:var(--no);font-weight:700}
+body{background:linear-gradient(160deg,#eef0ff,#f7f1ff 50%,#eefaf6) fixed}
+[data-theme=dark] body{background:linear-gradient(160deg,#0f1420,#171a33 60%,#10202a) fixed}
+header{backdrop-filter:blur(10px);box-shadow:0 2px 14px #0001}header b{font-size:20px}
+.k{box-shadow:0 6px 22px #4f46e51a;border-radius:20px;padding:18px}
+.m{transition:.2s;font-size:18px}.m:hover{transform:translateY(-3px);box-shadow:0 10px 26px #4f46e533}
+.m b{font-size:34px;margin-bottom:4px}
+.fc{min-height:240px;background:linear-gradient(135deg,var(--p),#a78bfa);color:#fff;font-size:30px;border:0}.fc small{color:#ffffffcc}
+.btn.p{background:linear-gradient(135deg,var(--p),#8b5cf6);border:0}.btn{border-radius:14px}
+h2{font-size:26px;margin:.4em 0}.f{border-radius:16px}
+</style></head><body>
+<header><b>📘 Vokabeltrainer</b><button class="btn" onclick="go('home')">Start</button><button class="btn" onclick="go('list')">Wortliste</button><button class="btn" onclick="tg()" aria-label="Hell/Dunkel">🌓</button></header>
+<main id="app"></main>
+<script>
+/* ===== VOKABELDATEN: eine Zeile = englisch|deutsch (Alternativen mit ;)|Beispielsatz ===== */
+const RAW=`hallway|Flur; Diele; Korridor|In American schools, there are lockers in the hallways.
+laboratory|Labor|Our school has got a modern laboratory.
+to skip|auslassen; schwänzen|The girls decided to skip class after lunch.
+to cheat|mogeln; betrügen|She cheated on the test, so she had to repeat it.
+*to get caught|erwischt werden; ertappt werden|She got caught by the teacher while she was cheating on a test.
+principal (AE)|Schulleiter/-in|The principal makes the rules at our school.
+*to be suspended|suspendiert werden; zeitweilig vom Unterricht ausgeschlossen werden|One of my classmates was suspended for two weeks.
+detention|Nachsitzen; Haft; Verhaftung|The whole class got detention today.
+lunchtime|Mittagszeit; Mittagspause|At lunchtime the students eat in the cafeteria.
+silence (no pl)|Stille; Schweigen; Ruhe|They were sitting there in silence.
+consequence|Konsequenz; Folge|Before you make a decision, think about the consequences.
+otherwise|sonst|I have to do my homework now. Otherwise I won't be able to go to the mall later.
+to act|sich verhalten; handeln|Don't act like a child.
+to deserve|verdienen|The others are angry with you, but you deserve it.
+further|weitere/-r/-s|Have you got any further comments?
+*to stand in line (AE)|anstehen; Schlange stehen; (sich) anstellen|In the US, it's very impolite not to stand in line.
+hall pass|Erlaubnis, sich während des Unterrichts auf dem Flur aufzuhalten|During lessons students aren't allowed to be in the hallway without a hall pass.
+to switch off|ausschalten|Switch off your phones. The movie will start soon.
+*to be about to do sth|im Begriff sein, etw. zu tun|I'm about to go shopping; I'll help you later.
+to fake|vortäuschen; fälschen|He faked a headache because he didn't want to take the test.
+cheat sheet|Spickzettel|I've never used a cheat sheet in my life!
+I see your point.|Ich verstehe, was du meinst.|I see your point, but I still don't agree.
+You'd better …|Du solltest lieber …|It's late. You'd better go home.
+attitude|Haltung; Einstellung|What's your attitude to/towards school?
+headmaster (BE)|Schulleiter/-in
+field trip|Schulausflug
+cafeteria|Cafeteria
+to carry out experiments|Experimente durchführen
+to take/pass/fail a test|einen Test ablegen/bestehen/nicht bestehen
+orientation|Orientierung; Orientierungs-|At the orientation weekend teenagers get information about teen life in the US.
+neighborhood (AE)|Nachbarschaft|We live in a very nice neighborhood.
+surprising|überraschend|The ending of the story was surprising.
+urban|städtisch; Stadt-|We live in an urban area.
+suburb|Vorort|Wimbledon is a suburb of London.
+suburban|Vorstadt-|Suburban houses often have lots of space.
+floor|Stockwerk|My apartment is on the second floor.
+built-in closet|Einbauschrank|American houses often have bedrooms with big built-in closets.
+front yard (AE)|Vorgarten|My grandma spends every afternoon in her front yard.
+backyard|Garten; Hinterhof|We had a barbecue in the backyard.
+store (AE)|Laden; Geschäft|There's a cool new store at the mall.
+noisy|laut|I can't hear you. It's so noisy in here.
+restroom (AE)|Toilette|Do you know where the restrooms are?
+competitive|leistungsorientiert; konkurrierend|Sarah is very competitive. She always wants to win.
+curfew|Sperrstunde; Ausgangssperre|In Germany, the curfew for teenagers under sixteen is 10 p.m.
+*to be homesick|Heimweh haben|Sometimes I was homesick for Germany.
+in spite of|trotz|In spite of the rain, we went for a walk.
+How about (+ noun or gerund)?|Wie wäre es mit …?; Wie ist es mit …?|How about going to the lake this afternoon?
+*to meet up|sich treffen|I'll be in Pittsburgh tomorrow. Let's meet up!
+downtown (AE)|Stadtzentrum; im Stadtzentrum|Shopping downtown is cooler!
+*to get used to sth|sich an etw. gewöhnen|I hate getting up early, but I've got used to it.
+elevator (AE)|Aufzug; Lift|Going up in an elevator is usually much quicker than walking up the stairs.
+by (+ gerund)|indem|You can't catch fish just by putting your hand in the river.
+luckily|glücklicherweise|Luckily, he found his money.
+It's no use (+ gerund)|Es nützt nichts …|It's no use writing to him. He'll never answer.
+I'm afraid …|Leider …|I'm afraid I'm very busy right now.
+*to keep in touch|in Kontakt bleiben|Let's keep in touch.
+*to keep (+ gerund)|weiter tun; immer wieder tun|Keep smiling, and everything will be fine!
+in sb's opinion|jmds. Meinung nach|In her opinion it's the best sport.
+impression|Impression; Eindruck|What was your impression of Matt?
+messy|unordentlich|Lucy must tidy up her room because it's messy.
+*to find one's way around|sich zurechtfinden|I know how to find my way around there.
+to unpack|auspacken|I haven't had time to unpack yet.
+to dislike|nicht mögen|I dislike living in this suburb.
+*to be crazy about|verrückt sein nach; abfahren auf|He's crazy about posting selfies.
+insecure|unsicher|Meeting new people makes me feel insecure.
+mind|Geist; Verstand; Kopf|I don't know what he's thinking. I don't know what's going through his mind.
+committee|Komitee; Ausschuss|The yearbook committee meets every Friday afternoon.
+8th-grader (AE)|Achtklässler/-in|All the popular 8th-graders are going to go to the party.
+in order to|um … zu; mit der Absicht|You often have to be creative in order to reach a goal.
+period (AE)|Stunde; Unterrichtsstunde|At our school first period starts at 8:00 a.m.
+geek|Außenseiter/-in|Just because a person isn't super popular doesn't mean he or she is a geek.
+dilemma|Dilemma; Zwickmühle|Claire is in a dilemma: Should she go to the party or not?
+mean|gemein|My brother was really mean to me.
+child labor (AE)|Kinderarbeit|Let's join the protest against child labor.
+sweatshop|Ausbeuterbetrieb|Lots of children have to work in sweatshops to make clothes.
+to demonstrate|demonstrieren|Lots of people are demonstrating for animal rights today.
+Pledge of Allegiance|Treueeid auf die amerikanische Flagge|The school day started with the Pledge of Allegiance.
+republic|Republik|Our country is a republic.
+nation|Nation|The US is one nation.
+liberty|Freiheit|Lots of people have to fight for their liberty.
+justice|Gerechtigkeit|We're hoping for justice.
+whether|ob|I don't know whether we can meet up.
+soup|Suppe|A bowl of hot soup does you good on a cold day.
+to order|bestellen|At the restaurant I ordered a burger and a glass of water.
+expectation|Erwartung|His expectations were very high.
+to prefer|vorziehen|I prefer chocolate to crisps.
+politics (pl)|Politik|Politics is an interesting subject.
+*to babysit|babysitten|Could you babysit your little sister tonight?
+to mean to (+ infinitive)|wollen; beabsichtigen; vorhaben|Sorry! I didn't mean to be rude.
+up to date|auf dem Laufenden; modern; zeitgemäß; aktuell|The information on his profile is always up to date.
+*to set the table|den Tisch decken|Set the table, please. Breakfast is ready.
+attic|Dachboden|Our attic is full of things we don't use any more.
+clothing drive|Kleidersammlung|Let's clear out our attic for the clothing drive.
+homeless shelter|Obdachlosenunterkunft|In the winter he sleeps at a homeless shelter.`;
+/* ===== ENDE DER DATEN ===== */
+const V=RAW.trim().split('\n').map(l=>{const[a,b,c]=l.split('|');return{en:a,de:b,ex:c||'',alts:b.split(';').map(s=>s.trim())}});
+const $=document.getElementById('app'),g=id=>document.getElementById(id),e=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),sh=a=>[...a].sort(()=>Math.random()-.5);
+let S;try{S=JSON.parse(localStorage.getItem('vok1'))}catch(_){}S=S||{p:{},fav:[],hist:[],days:{},theme:''};
+const sv=()=>{try{localStorage.setItem('vok1',JSON.stringify(S))}catch(_){}};
+const ds=()=>new Date().toLocaleDateString('sv'),D=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);
+const P=k=>S.p[k]||(S.p[k]={box:0,due:0,ok:0,bad:0});
+const learned=v=>(S.p[v.en]||{}).box>=3,weak=v=>{const p=S.p[v.en];return !!p&&p.bad>0&&p.box<3},isDue=v=>{const p=S.p[v.en];return !p||p.due<=D()};
+function rec(v,ok){const p=P(v.en);if(ok){p.ok++;p.box=Math.min(p.box+1,5)}else{p.bad++;p.box=0}p.due=D()+[0,1,2,4,8,16][p.box];const d=ds();S.days[d]=(S.days[d]||0)+1;sv()}
+const norm=s=>s.toLowerCase().replace(/\(.*?\)/g,'').replace(/[*….!?,]/g,'').replace(/\b(etw|sth|sb|jmdn|jmdm|jmds)\b\.?/g,'').replace(/\s+/g,' ').trim();
+const okEn=(a,v)=>{const x=norm(a),t=norm(v.en);return x==t||x==t.replace(/^to /,'')||'to '+x==t};
+const okDe=(a,v)=>v.alts.some(s=>[norm(s),norm(s).split('/')[0]].includes(norm(a)));
+function setTheme(){document.documentElement.dataset.theme=S.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')}
+function tg(){S.theme=document.documentElement.dataset.theme=='dark'?'light':'dark';sv();setTheme()}
+function streak(){let n=0,d=new Date();if(!S.days[d.toLocaleDateString('sv')])d.setDate(d.getDate()-1);while(S.days[d.toLocaleDateString('sv')]){n++;d.setDate(d.getDate()-1)}return n}
+const MODES=[['cards','🃏','Lernen','Schwierige Vokabeln kommen öfter'],['flip','🔄','Karteikarten','Zufällig durchblättern'],['ed','🇩🇪','Englisch → Deutsch','Übersetzung eintippen'],['de','🇬🇧','Deutsch → Englisch','Englisches Wort eintippen'],['mc','✅','Multiple Choice','4 Antworten'],['wr','✍️','Schreibtraining','Rechtschreibung üben'],['mix','🎯','Gemischter Test','15 Fragen, alle Modi'],['err','🔧','Fehlertraining','Deine Fehlerliste']];
+let cur=null,F={q:'',f:'all'};
+function go(v){cur=null;({home,list,stats})[v]()}
+function home(){const col=['#6366f1','#8b5cf6','#0ea5e9','#14b8a6','#22c55e','#f59e0b','#ef4444','#ec4899'];
+$.innerHTML=`<h2>Was möchtest du üben?</h2><p><small>${V.length} Vokabeln. Was du schlecht kannst, kommt öfter dran; was du sicher kannst, seltener.</small></p><div class=g>${MODES.map((m,i)=>`<button class="k m" style="border-top:5px solid ${col[i]}" onclick="start('${m[0]}')"><b>${m[1]}</b>${m[2]}<br><small>${m[3]}</small></button>`).join('')}</div><p><button class=btn onclick="if(confirm('Gesamten Fortschritt löschen?')){S={p:{},fav:[],hist:[],days:{},theme:S.theme};sv();go('home')}"><small>Fortschritt zurücksetzen</small></button></p>`}
+function msg(h,t){$.innerHTML=`<div class=k><h2>${h}</h2><p>${t}</p><button class="btn p" onclick="go('home')">Zurück</button></div>`}
+const wt=v=>{const p=S.p[v.en];return p?[6,4,2.5,1,.5,.25][p.box]*(p.bad>p.ok?1.5:1):3};
+function wpick(n,pool=V){const a=[...pool],r=[];while(r.length<n&&a.length){let u=Math.random()*a.reduce((x,v)=>x+wt(v),0),i=0;for(;i<a.length-1;i++){u-=wt(a[i]);if(u<=0)break}r.push(a.splice(i,1)[0])}return r}
+function rq(v,t){const Q=cur;Q.rq=Q.rq||{};if(!Q.rq[v.en]){Q.rq[v.en]=1;Q.it.splice(Math.min(Q.i+4,Q.it.length),0,{v,t})}}
+function start(m){let it;const T=['ed','de','wr','mc'],rt=()=>T[Math.floor(Math.random()*4)];
+if(m=='cards')it=wpick(15).map(v=>({v,t:'card'}));
+else if(m=='flip')it=sh(V).slice(0,20).map(v=>({v,t:'card'}));
+else if(m=='mix')it=wpick(15).map(v=>({v,t:rt()}));
+else if(m=='err'){const p=V.filter(weak);if(!p.length)return msg('Keine Fehler 👍','Falsch beantwortete Vokabeln erscheinen hier und verschwinden nach 3 richtigen Antworten in Folge.');it=wpick(Math.min(15,p.length),p).map(v=>({v,t:rt()}))}
+else it=wpick(10).map(v=>({v,t:m}));
+run(it,m)}
+function run(it,m){cur={it,m,i:0,ok:0,bad:0,wrong:[]};q()}
+function q(){const Q=cur,x=Q.it[Q.i];if(!x)return end();const v=x.v,t=x.t;Q.done=0;Q.fl=0;let b;
+const hd=`<small>Frage ${Q.i+1} von ${Q.it.length}</small><div class=bar><i style="width:${Q.i/Q.it.length*100}%"></i></div><br>`;
+if(t=='card')b=`<div class="k fc" id=fc onclick="flip()"><div id=fcn>${e(v.en)}</div><small>Antippen zum Umdrehen</small></div><div id=fb></div>`;
+else if(t=='mc'){Q.o=sh([v.de,...sh(V.filter(y=>y.de!=v.de)).slice(0,3).map(y=>y.de)]);b=`<h2>${e(v.en)}</h2><small>Was bedeutet das?</small>`+Q.o.map((o,i)=>`<button class="btn opt" onclick="pick(${i})">${e(o)}</button>`).join('')+`<div id=fb></div>`}
+else{const w=v.en.replace(/^\*/,'');b=`<h2>${t=='ed'?e(v.en):e(v.alts.join(' / '))}</h2><small>${t=='ed'?'Gib die deutsche Übersetzung ein':t=='de'?'Gib das englische Wort ein':'Schreibe das englische Wort: '+w.length+' Zeichen, beginnt mit „'+e(w[0])+'“'}</small><input id=in autocomplete=off autocapitalize=none spellcheck=false><div id=fb></div><button class="btn p" id=go onclick="chk()">Prüfen</button>`}
+$.innerHTML=hd+b;const i=g('in');if(i)i.focus()}
+function flip(){const v=cur.it[cur.i].v;cur.fl=!cur.fl;g('fcn').innerHTML=cur.fl?`<b>${e(v.de)}</b><br><small>${e(v.ex)}</small>`:e(v.en);if(cur.fl)g('fb').innerHTML=`<button class="btn no" onclick="ans(0)">Noch üben</button> <button class="btn ok" onclick="ans(1)">Gewusst</button>`}
+function ans(ok){const Q=cur,v=Q.it[Q.i].v;rec(v,ok);ok?Q.ok++:(Q.bad++,Q.wrong.push(v),rq(v,'card'));Q.i++;q()}
+function chk(){const Q=cur,x=Q.it[Q.i],v=x.v,a=g('in').value;if(!a.trim())return;Q.done=1;fin(x.t=='ed'?okDe(a,v):okEn(a,v),v,x.t=='ed'?v.de:v.en,a,x.t)}
+function pick(i){const Q=cur;if(Q.done)return;Q.done=1;const v=Q.it[Q.i].v;document.querySelectorAll('.opt').forEach((b,j)=>{if(Q.o[j]==v.de)b.style.borderColor='var(--ok)';else if(j==i)b.style.borderColor='var(--no)'});fin(Q.o[i]==v.de,v,v.de,'','mc')}
+function fin(ok,v,sol,a,t){const Q=cur,o=g('go');if(o)o.remove();rec(v,ok);ok?Q.ok++:(Q.bad++,Q.wrong.push(v),rq(v,Q.it[Q.i].t));let w='';
+if(!ok&&t=='wr'){const s=sol.replace(/^\*/,'').toLowerCase();w='<br>Deine Schreibweise: '+[...a].map((c,i)=>c.toLowerCase()==s[i]?e(c):`<span class=x>${e(c)}</span>`).join('')}
+g('fb').innerHTML=`<div class="f ${ok?'y':'n'}">${ok?'Richtig! 🎉':'Nicht schlimm, daraus lernst du! Richtig ist:<br><b>'+e(sol)+'</b>'+w}${v.ex?`<br><small>${e(v.ex)}</small>`:''}</div><button class="btn p" id=go onclick="nxt()">Weiter</button>`}
+function nxt(){cur.i++;q()}
+document.addEventListener('keydown',ev=>{if(ev.key=='Enter'){const b=g('go');if(b)b.click()}});
+function end(){const Q=cur;Q.wrong=[...new Set(Q.wrong)];const n=Q.ok+Q.bad,pc=n?Math.round(Q.ok/n*100):0;if(Q.m!='flip'&&Q.m!='cards'){S.hist.unshift({d:ds(),m:Q.m,n,ok:Q.ok});S.hist=S.hist.slice(0,30)}sv();
+$.innerHTML=`<div class=k><h2>${pc>=80?'Super gemacht! 🌟':pc>=50?'Gut dabei! 💪':'Weiter so, Übung macht den Meister! 🌱'}</h2><p><b>${Q.ok}</b> richtig, <b>${Q.bad}</b> falsch (${pc} %)</p>${Q.wrong.length?`<p><small>Zum Wiederholen: ${Q.wrong.map(v=>e(v.en)).join(', ')}</small></p><button class="btn p" onclick="again()">Falsche erneut üben</button> `:''}<button class="btn" onclick="start('${Q.m}')">Nochmal</button> <button class="btn" onclick="go('home')">Start</button></div>`}
+function again(){run(sh(cur.wrong).map(v=>({v,t:'ed'})),'err')}
+function list(){$.innerHTML=`<h2>Wortliste (${V.length})</h2><input id=s placeholder="Suchen …" value="${e(F.q)}" oninput="F.q=this.value;rows()"><select class=btn onchange="F.f=this.value;rows()">${[['all','Alle'],['fav','Favoriten ★'],['lrn','Gelernt'],['new','Noch neu'],['wk','Fehlerliste']].map(o=>`<option value=${o[0]} ${F.f==o[0]?'selected':''}>${o[1]}</option>`).join('')}</select><div id=rw></div>`;rows()}
+function rows(){const q=F.q.toLowerCase(),k=s=>norm(s).replace(/^to /,'');const a=V.filter(v=>(!q||(v.en+v.de+v.ex).toLowerCase().includes(q))&&({all:1,fav:S.fav.includes(v.en),lrn:learned(v),new:!S.p[v.en],wk:weak(v)}[F.f])).sort((x,y)=>k(x.en).localeCompare(k(y.en)));
+g('rw').innerHTML=`<p><small>${a.length} Treffer, alphabetisch</small></p>`+a.map(v=>`<div class=r><button class=btn onclick="fav(${V.indexOf(v)})">${S.fav.includes(v.en)?'★':'☆'}</button><div><b>${e(v.en)}</b> – ${e(v.de)}${v.ex?`<br><small>${e(v.ex)}</small>`:''}</div></div>`).join('')}
+function fav(i){const k=V[i].en,j=S.fav.indexOf(k);j<0?S.fav.push(k):S.fav.splice(j,1);sv();rows()}
+function stats(){const bad=V.filter(weak);$.innerHTML=`<h2>Statistik</h2><div class=k><h3>Fehlerliste (${bad.length})</h3>${bad.map(v=>`<div>${e(v.en)} – ${e(v.de)}</div>`).join('')||'<small>Keine Fehler 🎉</small>'}</div><br><div class=k><h3>Letzte Tests</h3>${S.hist.map(h=>`<div>${h.d}: ${MODES.find(m=>m[0]==h.m)[2]}: ${h.ok}/${h.n} richtig</div>`).join('')||'<small>Noch keine Tests.</small>'}</div><br><button class=btn onclick="if(confirm('Gesamten Fortschritt löschen?')){S={p:{},fav:[],hist:[],days:{},theme:S.theme};sv();go('home')}">Fortschritt zurücksetzen</button>`}
+setTheme();home();
+</script></body></html>
